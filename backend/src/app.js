@@ -28,10 +28,11 @@ const limiter = rateLimit({
   max: 100,
   message: { error: 'Too many requests, please try again later.' }
 });
-app.use('/api/', limiter);
+
 
 // CORS
 
+app.set('trust proxy', 1); // Add this line
 
 
 app.use(
@@ -41,7 +42,7 @@ app.use(
     credentials: true,
   })
 );
-
+app.use('/api/', limiter);
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({
