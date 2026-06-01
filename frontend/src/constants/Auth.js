@@ -1,0 +1,97 @@
+export const S = {
+  root: {
+    display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden',
+    fontFamily: "'DM Sans', 'Segoe UI', sans-serif",
+  },
+  left: {
+    flex: 1, position: 'relative', overflow: 'hidden',
+    background: 'linear-gradient(145deg, #0a0f1e 0%, #0f1f3d 40%, #0d1a35 100%)',
+    display: 'flex', flexDirection: 'column', justifyContent: 'center',
+    padding: '64px',
+  },
+  leftGrid: {
+    position: 'absolute', inset: 0, opacity: 0.06,
+    backgroundImage: 'linear-gradient(#3b82f6 1px, transparent 1px), linear-gradient(90deg, #3b82f6 1px, transparent 1px)',
+    backgroundSize: '48px 48px',
+  },
+  leftGlow: {
+    position: 'absolute', width: '600px', height: '600px',
+    borderRadius: '50%', top: '-150px', left: '-100px',
+    background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)',
+    pointerEvents: 'none',
+  },
+  leftGlow2: {
+    position: 'absolute', width: '400px', height: '400px',
+    borderRadius: '50%', bottom: '-100px', right: '60px',
+    background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)',
+    pointerEvents: 'none',
+  },
+  leftContent: { position: 'relative', zIndex: 2, maxWidth: '520px' },
+  logo: {
+    display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '64px',
+  },
+  logoIcon: {
+    width: '44px', height: '44px', borderRadius: '12px',
+    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontWeight: 900, fontSize: '15px', color: '#fff', letterSpacing: '-0.5px',
+    boxShadow: '0 0 0 1px rgba(255,255,255,0.08), 0 8px 24px rgba(59,130,246,0.3)',
+  },
+  logoText: { fontWeight: 800, fontSize: '18px', color: '#f8fafc', letterSpacing: '-0.3px' },
+  headline: {
+    fontSize: '52px', fontWeight: 900, color: '#f8fafc', lineHeight: 1.1,
+    letterSpacing: '-1.5px', marginBottom: '20px',
+  },
+  headlineAccent: {
+    background: 'linear-gradient(135deg, #60a5fa, #a78bfa)',
+    WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+  },
+  subtext: {
+    fontSize: '16px', color: '#64748b', lineHeight: 1.7, marginBottom: '48px', maxWidth: '400px',
+  },
+  featureList: { display: 'flex', flexDirection: 'column', gap: '14px' },
+  featureItem: {
+    display: 'flex', alignItems: 'center', gap: '12px',
+  },
+  featureDot: {
+    width: '6px', height: '6px', borderRadius: '50%',
+    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', flexShrink: 0,
+  },
+  featureText: { fontSize: '14px', color: '#94a3b8', fontWeight: 500 },
+
+  right: {
+    width: '480px', flexShrink: 0, background: '#ffffff',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '48px', boxShadow: '-20px 0 60px rgba(0,0,0,0.2)',
+  },
+  form: { width: '100%', maxWidth: '360px' },
+  formTitle: { fontSize: '30px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.8px', marginBottom: '6px' },
+  formSub: { fontSize: '14px', color: '#94a3b8', marginBottom: '36px' },
+  fieldWrap: { marginBottom: '20px' },
+  label: { display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '7px', letterSpacing: '0.04em', textTransform: 'uppercase' },
+  input: {
+    width: '100%', padding: '13px 16px', fontSize: '14px', boxSizing: 'border-box',
+    border: '1.5px solid #e5e7eb', borderRadius: '10px', outline: 'none',
+    color: '#111827', background: '#fafafa', transition: 'all 0.2s',
+    fontFamily: "'DM Sans', sans-serif",
+  },
+  btn: {
+    width: '100%', padding: '14px', fontSize: '14px', fontWeight: 700,
+    background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+    color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer',
+    letterSpacing: '0.01em', transition: 'opacity 0.2s, transform 0.15s',
+    boxShadow: '0 4px 14px rgba(59,130,246,0.4)',
+    fontFamily: "'DM Sans', sans-serif",
+  },
+  btnDisabled: { opacity: 0.6, cursor: 'not-allowed' },
+  footer: { textAlign: 'center', fontSize: '13px', color: '#94a3b8', marginTop: '24px' },
+  link: { color: '#3b82f6', fontWeight: 700 },
+};
+
+
+export const inputStyle = (name, focused) => ({
+  ...S.input,
+  borderColor: focused === name ? '#3b82f6' : '#e5e7eb',
+  background: focused === name ? '#fff' : '#fafafa',
+  boxShadow: focused === name ? '0 0 0 3px rgba(59,130,246,0.1)' : 'none',
+});

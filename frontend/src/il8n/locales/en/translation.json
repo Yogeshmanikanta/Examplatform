@@ -1,0 +1,32 @@
+{
+  "exam": {
+    "badge": "EXAM",
+    "duration": "Duration",
+    "questions": "Questions",
+    "totalMarks": "Total marks",
+    "passMark": "Pass mark",
+    "markingScheme": "Marking scheme",
+    "correctAnswer": "Correct answer",
+    "wrongAnswer": "Wrong answer",
+    "unanswered": "Unanswered",
+    "noNegative": "No negative marking",
+    "instructions": "Instructions",
+    "examinerNotes": "EXAMINER NOTES",
+    "agreeText": "I have read all instructions and agree to the exam rules.",
+    "startBtn": "I agree & start exam",
+    "loading": "Loading exam details...",
+    "instrList": {
+      "i1": "Ensure you have a stable internet connection before starting.",
+      "i2": "The exam will open in fullscreen mode. Do not exit fullscreen.",
+      "i3": "Switching browser tabs will be recorded and may lead to disqualification.",
+      "i4": "Your answers are auto-saved every few seconds.",
+      "i5": "Do not refresh or close the browser during the exam.",
+      "i6": "Once the timer reaches zero, your exam will be submitted automatically."
+    }
+  },
+  "lang": {
+    "en": "English",
+    "hi": "हिन्दी",
+    "te": "తెలుగు"
+  }
+}

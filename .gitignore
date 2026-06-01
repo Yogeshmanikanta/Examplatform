@@ -1,0 +1,12 @@
+node_modules
+.env
+dist
+.DS_Store
+*.log
+package-lock.json
+yarn.lock
+# Ignore build artifacts
+/build
+package.json
+src/i18n
+src/components/LanguageSwitcher.jsx
