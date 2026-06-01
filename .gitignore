@@ -7,6 +7,5 @@ package-lock.json
 yarn.lock
 # Ignore build artifacts
 /build
-package.json
 src/i18n
 src/components/LanguageSwitcher.jsx
