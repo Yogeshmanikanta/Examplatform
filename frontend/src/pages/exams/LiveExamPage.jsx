@@ -359,7 +359,7 @@ useEffect(() => {
                 {/* MCQ Options */}
                 {currentQuestion.question_type === 'mcq' && currentQuestion.options && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {currentQuestion.options.map((opt) => {
+                    {(Array.isArray(currentQuestion.options) ? currentQuestion.options : JSON.parse(currentQuestion.options || '[]')).map((opt) => {
                       const selected = answers[currentQuestion.id] === opt.id;
                       return (
                         <button key={opt.id} onClick={() => saveAnswer(currentQuestion.id, opt.id)}
