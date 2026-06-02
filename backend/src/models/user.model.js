@@ -1,22 +1,15 @@
 import pool from '../config/db.js';
 
 export const UserModel = {
-
   // Find user by email
   async findByEmail(email) {
-    const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
-      [email.toLowerCase()]
-    );
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
     return result.rows[0] || null;
   },
 
   // Find user by mobile
   async findByMobile(mobile) {
-    const result = await pool.query(
-      'SELECT * FROM users WHERE mobile = $1',
-      [mobile]
-    );
+    const result = await pool.query('SELECT * FROM users WHERE mobile = $1', [mobile]);
     return result.rows[0] || null;
   },
 
@@ -51,19 +44,16 @@ export const UserModel = {
 
   // Update password
   async updatePassword(userId, password_hash) {
-    await pool.query(
-      'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
-      [password_hash, userId]
-    );
+    await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [
+      password_hash,
+      userId,
+    ]);
   },
 
   // Save OTP
   async saveOTP(userId, email, otp_code, purpose) {
     // Delete old OTPs for this user+purpose
-    await pool.query(
-      'DELETE FROM otps WHERE email = $1 AND purpose = $2',
-      [email, purpose]
-    );
+    await pool.query('DELETE FROM otps WHERE email = $1 AND purpose = $2', [email, purpose]);
     // Insert new OTP - expires in 10 minutes
     const result = await pool.query(
       `INSERT INTO otps (user_id, email, otp_code, purpose, expires_at)
@@ -85,10 +75,7 @@ export const UserModel = {
     if (result.rows.length === 0) return null;
 
     // Mark OTP as used
-    await pool.query(
-      'UPDATE otps SET is_used = true WHERE id = $1',
-      [result.rows[0].id]
-    );
+    await pool.query('UPDATE otps SET is_used = true WHERE id = $1', [result.rows[0].id]);
     return result.rows[0];
   },
 
@@ -96,25 +83,26 @@ export const UserModel = {
 
   async findAllCandidates() {
     const result = await pool.query(
-    `SELECT id, full_name, email, mobile, role, is_verified, created_at
+      `SELECT id, full_name, email, mobile, role, is_verified, created_at
      FROM users WHERE role = 'candidate'
      ORDER BY created_at DESC`
-  );
-  return result.rows;
-},
+    );
+    return result.rows;
+  },
 
-async updateCandidate(id, { full_name, email, mobile }) {
-  const result = await pool.query(
-    `UPDATE users SET full_name=$1, email=$2, mobile=$3, updated_at=NOW()
+  async updateCandidate(id, { full_name, email, mobile }) {
+    const result = await pool.query(
+      `UPDATE users SET full_name=$1, email=$2, mobile=$3, updated_at=NOW()
      WHERE id=$4 AND role='candidate'
      RETURNING id, full_name, email, mobile, role, is_verified, created_at`,
-    [full_name, email.toLowerCase(), mobile, id]
-  );
-  return result.rows[0];
-},
+      [full_name, email.toLowerCase(), mobile, id]
+    );
+    return result.rows[0];
+  },
 
-async deleteCandidate(id) {
-  await pool.query(`DELETE FROM users WHERE id=$1 AND role='candidate'`, [id]);
-},
+  async deleteCandidate(id) {
+    await pool.query(`DELETE FROM results WHERE candidate_id=$1`, [id]);
+    await pool.query(`DELETE FROM exam_attempts WHERE candidate_id=$1`, [id]);
+    await pool.query(`DELETE FROM users WHERE id=$1 AND role='candidate'`, [id]);
+  },
 };
-

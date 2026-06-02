@@ -7,7 +7,11 @@ import { successResponse, errorResponse } from '../utils/response.js';
 const router = express.Router();
 router.use(protect);
 
-router.get('/results', authorize('super_admin', 'admin', 'coordinator','candidate'), getAllCandidateResults);
+router.get(
+  '/results',
+  authorize('super_admin', 'admin', 'coordinator', 'candidate'),
+  getAllCandidateResults
+);
 
 // Candidates CRUD
 router.get('/candidates', authorize('super_admin', 'admin'), async (req, res) => {
@@ -35,7 +39,8 @@ router.delete('/candidates/:id', authorize('super_admin'), async (req, res) => {
     await UserModel.deleteCandidate(req.params.id);
     return successResponse(res, null, 'Candidate deleted');
   } catch (err) {
-    return errorResponse(res, 'Failed to delete candidate', 500);
+    console.error('DELETE ERROR:', err.message); // ← add this
+    return errorResponse(res, err.message, 500); // ← return actual error
   }
 });
 

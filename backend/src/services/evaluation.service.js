@@ -3,37 +3,42 @@ import { QuestionModel } from '../models/question.model.js';
 
 async function evaluateDescriptiveWithAI(question, modelAnswer, candidateAnswer, maxMarks) {
   const models = [
-    "meta-llama/llama-3.3-70b-instruct:free",
-    "deepseek/deepseek-r1:free",
-    "openrouter/free"   // ← last resort: auto-picks any available free model
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'deepseek/deepseek-r1:free',
+    'openrouter/free', // ← last resort: auto-picks any available free model
   ];
 
   for (const model of models) {
     try {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
         headers: {
-          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:5000",
-          "X-Title": "ExamPlatform"
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'http://localhost:5000',
+          'X-Title': 'ExamPlatform',
         },
         body: JSON.stringify({
           model,
           max_tokens: 500,
-          messages: [{
-            role: "user",
-            content: `You are an exam evaluator. Score the candidate's answer out of ${maxMarks}.
+          messages: [
+            {
+              role: 'user',
+              content: `You are an exam evaluator. Score the candidate's answer out of ${maxMarks}.
 Question: ${question}
 ${modelAnswer ? `Model Answer: ${modelAnswer}` : 'No model answer provided — evaluate based on accuracy and completeness.'}
 Candidate Answer: ${candidateAnswer}
-Respond ONLY as JSON: {"score": <number>, "feedback": "<string>"}`
-          }]
-        })
+Respond ONLY as JSON: {"score": <number>, "feedback": "<string>"}`,
+            },
+          ],
+        }),
       });
 
       const data = await response.json();
-      if (data.error) { console.log(`Model ${model} failed:`, data.error.message); continue; }
+      if (data.error) {
+        console.log(`Model ${model} failed:`, data.error.message);
+        continue;
+      }
 
       const content = data.choices?.[0]?.message?.content;
       if (!content) continue;
@@ -41,7 +46,6 @@ Respond ONLY as JSON: {"score": <number>, "feedback": "<string>"}`
       const parsed = JSON.parse(content.replace(/```json|```/g, '').trim());
       console.log(`AI eval success with model: ${model}`);
       return { score: Math.min(parsed.score, maxMarks), feedback: parsed.feedback };
-
     } catch (err) {
       console.log(`Model ${model} error:`, err.message);
       continue;
@@ -53,7 +57,6 @@ Respond ONLY as JSON: {"score": <number>, "feedback": "<string>"}`
 }
 
 export const EvaluationService = {
-
   async evaluateAttempt(attempt_id) {
     const attemptResult = await pool.query('SELECT * FROM exam_attempts WHERE id=$1', [attempt_id]);
     const attempt = attemptResult.rows[0];
@@ -66,7 +69,10 @@ export const EvaluationService = {
     const answers = attempt.answers || {};
 
     let totalScore = 0;
-    let attempted = 0, correct = 0, incorrect = 0, skipped = 0;
+    let attempted = 0,
+      correct = 0,
+      incorrect = 0,
+      skipped = 0;
     const questionResults = [];
     const aiFeedback = [];
 
@@ -99,17 +105,28 @@ export const EvaluationService = {
           candidate_answer: candidateAnswer,
           score: aiResult.score,
           max_marks: question.marks,
-          feedback: aiResult.feedback
+          feedback: aiResult.feedback,
         });
-        questionResults.push({ question_id: question.id, status: 'ai_evaluated', marks_awarded: marksAwarded });
+        questionResults.push({
+          question_id: question.id,
+          status: 'ai_evaluated',
+          marks_awarded: marksAwarded,
+        });
         continue;
       }
 
       switch (question.question_type) {
-        case 'mcq':       isCorrect = this.evaluateMCQ(candidateAnswer, question.correct_answer); break;
-        case 'true_false': isCorrect = this.evaluateTrueFalse(candidateAnswer, question.correct_answer); break;
-        case 'fill_blank': isCorrect = this.evaluateFillBlank(candidateAnswer, question.correct_answer); break;
-        default: isCorrect = null;
+        case 'mcq':
+          isCorrect = this.evaluateMCQ(candidateAnswer, question.correct_answer);
+          break;
+        case 'true_false':
+          isCorrect = this.evaluateTrueFalse(candidateAnswer, question.correct_answer);
+          break;
+        case 'fill_blank':
+          isCorrect = this.evaluateFillBlank(candidateAnswer, question.correct_answer);
+          break;
+        default:
+          isCorrect = null;
       }
 
       if (isCorrect === true) {
@@ -124,20 +141,21 @@ export const EvaluationService = {
 
       questionResults.push({
         question_id: question.id,
-        status: isCorrect === true ? 'correct' : isCorrect === false ? 'incorrect' : 'pending_manual',
-        marks_awarded: marksAwarded
+        status:
+          isCorrect === true ? 'correct' : isCorrect === false ? 'incorrect' : 'pending_manual',
+        marks_awarded: marksAwarded,
       });
     }
 
     totalScore = Math.max(0, totalScore);
 
-    await pool.query(
-      `UPDATE exam_attempts SET score=$1, status='evaluated' WHERE id=$2`,
-      [totalScore, attempt_id]
-    );
+    await pool.query(`UPDATE exam_attempts SET score=$1, status='evaluated' WHERE id=$2`, [
+      totalScore,
+      attempt_id,
+    ]);
 
     const percentage = (totalScore / exam.total_marks) * 100;
-    const isPassed = exam.pass_marks ? totalScore >= exam.pass_marks : null;
+    const isPassed = totalScore >= exam.pass_marks;
 
     const resultRecord = await pool.query(
       `INSERT INTO results (attempt_id, candidate_id, exam_id, total_score, percentage, is_passed, ai_feedback)
@@ -145,7 +163,15 @@ export const EvaluationService = {
        ON CONFLICT (attempt_id)
        DO UPDATE SET total_score=$4, percentage=$5, is_passed=$6, ai_feedback=$7
        RETURNING *`,
-      [attempt_id, attempt.candidate_id, attempt.exam_id, totalScore, percentage.toFixed(2), isPassed, JSON.stringify(aiFeedback)]
+      [
+        attempt_id,
+        attempt.candidate_id,
+        attempt.exam_id,
+        totalScore,
+        percentage.toFixed(2),
+        isPassed,
+        JSON.stringify(aiFeedback),
+      ]
     );
 
     return {
@@ -153,18 +179,21 @@ export const EvaluationService = {
       total_marks: exam.total_marks,
       percentage: percentage.toFixed(2),
       is_passed: isPassed,
-      attempted, correct, incorrect, skipped,
+      attempted,
+      correct,
+      incorrect,
+      skipped,
       ai_feedback: aiFeedback,
       question_results: questionResults,
-      result: resultRecord.rows[0]
+      result: resultRecord.rows[0],
     };
   },
 
   evaluateMCQ(candidateAnswer, correctAnswer) {
     if (Array.isArray(correctAnswer)) {
       if (!Array.isArray(candidateAnswer)) return false;
-      const c = correctAnswer.map(a => a.toString().toLowerCase()).sort();
-      const g = candidateAnswer.map(a => a.toString().toLowerCase()).sort();
+      const c = correctAnswer.map((a) => a.toString().toLowerCase()).sort();
+      const g = candidateAnswer.map((a) => a.toString().toLowerCase()).sort();
       return JSON.stringify(c) === JSON.stringify(g);
     }
     return candidateAnswer.toString().toLowerCase() === correctAnswer.toString().toLowerCase();
@@ -177,7 +206,7 @@ export const EvaluationService = {
   evaluateFillBlank(candidateAnswer, correctAnswer) {
     const given = candidateAnswer.toString().toLowerCase().trim();
     if (Array.isArray(correctAnswer)) {
-      return correctAnswer.some(a => a.toString().toLowerCase().trim() === given);
+      return correctAnswer.some((a) => a.toString().toLowerCase().trim() === given);
     }
     return given === correctAnswer.toString().toLowerCase().trim();
   },
@@ -189,11 +218,12 @@ export const EvaluationService = {
     );
     const total = results.rows.length;
     for (let i = 0; i < total; i++) {
-      const percentile = ((total - i - 1) / total * 100).toFixed(2);
-      await pool.query(
-        'UPDATE results SET rank=$1, percentile=$2 WHERE id=$3',
-        [i + 1, percentile, results.rows[i].id]
-      );
+      const percentile = (((total - i - 1) / total) * 100).toFixed(2);
+      await pool.query('UPDATE results SET rank=$1, percentile=$2 WHERE id=$3', [
+        i + 1,
+        percentile,
+        results.rows[i].id,
+      ]);
     }
-  }
+  },
 };

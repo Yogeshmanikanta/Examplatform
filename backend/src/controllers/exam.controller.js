@@ -6,10 +6,17 @@ import pool from '../config/db.js';
 export const createExam = async (req, res) => {
   try {
     const {
-      title, description, instructions,
-      duration_minutes, total_marks, pass_marks,
-      negative_marking, shuffle_questions,
-      shuffle_options, start_time, end_time
+      title,
+      description,
+      instructions,
+      duration_minutes,
+      total_marks,
+      pass_marks,
+      negative_marking,
+      shuffle_questions,
+      shuffle_options,
+      start_time,
+      end_time,
     } = req.body;
 
     // Validate required fields
@@ -26,16 +33,21 @@ export const createExam = async (req, res) => {
     }
 
     const exam = await ExamModel.create({
-      title, description, instructions,
-      duration_minutes, total_marks, pass_marks,
-      negative_marking, shuffle_questions,
-      shuffle_options, start_time, end_time,
-      created_by: req.user.id
+      title,
+      description,
+      instructions,
+      duration_minutes,
+      total_marks,
+      pass_marks,
+      negative_marking,
+      shuffle_questions,
+      shuffle_options,
+      start_time,
+      end_time,
+      created_by: req.user.id,
     });
 
-    return successResponse(res, { exam },
-      'Exam created successfully', 201);
-
+    return successResponse(res, { exam }, 'Exam created successfully', 201);
   } catch (error) {
     console.error('Create exam error:', error);
     return errorResponse(res, 'Failed to create exam', 500);
@@ -61,12 +73,16 @@ export const getAdminStats = async (req, res) => {
       pool.query(`SELECT COUNT(*) FROM questions`),
       pool.query(`SELECT COUNT(*) FROM results WHERE published_at IS NOT NULL`),
     ]);
-    return successResponse(res, {
-      total_exams: parseInt(exams.rows[0].count),
-      total_candidates: parseInt(candidates.rows[0].count),
-      total_questions: parseInt(questions.rows[0].count),
-      results_published: parseInt(results.rows[0].count),
-    }, 'Stats fetched');
+    return successResponse(
+      res,
+      {
+        total_exams: parseInt(exams.rows[0].count),
+        total_candidates: parseInt(candidates.rows[0].count),
+        total_questions: parseInt(questions.rows[0].count),
+        results_published: parseInt(results.rows[0].count),
+      },
+      'Stats fetched'
+    );
   } catch (error) {
     console.error('Get admin stats error:', error);
     return errorResponse(res, 'Failed to fetch stats', 500);
@@ -100,18 +116,15 @@ export const updateExam = async (req, res) => {
 
     // Only drafts can be edited
     if (exam.status === 'live' || exam.status === 'completed') {
-      return errorResponse(res,
-        'Cannot edit a live or completed exam');
+      return errorResponse(res, 'Cannot edit a live or completed exam');
     }
 
     const updated = await ExamModel.update(req.params.id, {
       ...exam,
-      ...req.body
+      ...req.body,
     });
 
-    return successResponse(res, { exam: updated },
-      'Exam updated successfully');
-
+    return successResponse(res, { exam: updated }, 'Exam updated successfully');
   } catch (error) {
     console.error('Update exam error:', error);
     return errorResponse(res, 'Failed to update exam', 500);
@@ -133,14 +146,11 @@ export const publishExam = async (req, res) => {
     // Check if exam has questions
     const stats = await ExamModel.getStats(req.params.id);
     if (stats.total_questions === 0) {
-      return errorResponse(res,
-        'Cannot publish exam with no questions');
+      return errorResponse(res, 'Cannot publish exam with no questions');
     }
 
     const published = await ExamModel.publish(req.params.id);
-    return successResponse(res, { exam: published },
-      'Exam published successfully');
-
+    return successResponse(res, { exam: published }, 'Exam published successfully');
   } catch (error) {
     console.error('Publish exam error:', error);
     return errorResponse(res, 'Failed to publish exam', 500);
@@ -155,15 +165,27 @@ export const deleteExam = async (req, res) => {
       return errorResponse(res, 'Exam not found', 404);
     }
 
-    if (exam.status !== 'draft') {
-      return errorResponse(res, 'Only draft exams can be deleted');
-    }
-
     await ExamModel.delete(req.params.id);
     return successResponse(res, null, 'Exam deleted successfully');
-
   } catch (error) {
     console.error('Delete exam error:', error);
     return errorResponse(res, 'Failed to delete exam', 500);
+  }
+};
+export const getAvailableExams = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT e.*,
+              ea.status as attempt_status
+       FROM exams e
+       LEFT JOIN exam_attempts ea 
+         ON ea.exam_id = e.id AND ea.candidate_id = $1
+       WHERE e.status IN ('published', 'live')
+       ORDER BY e.created_at DESC`,
+      [req.user.id]
+    );
+    res.json({ success: true, data: { exams: result.rows } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to fetch exams' });
   }
 };

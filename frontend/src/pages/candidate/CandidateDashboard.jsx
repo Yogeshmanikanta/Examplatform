@@ -3,13 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
-import { S, NAV_ITEMS, PAGE_TITLES,FONT ,card} from '../../constants/Candidate';
-import {Loader,HomeTab,AnalyticsTab,ExamsTab} from '../../components/CandidateRes';
+import { S, NAV_ITEMS, PAGE_TITLES, FONT, card } from '../../constants/Candidate';
+import { Loader, HomeTab, AnalyticsTab, ExamsTab, ResultsTab } from '../../components/CandidateRes';
 import AdminResults from '../admin/AdminResults';
-
-
-
-
 
 // ─── Main ─────────────────────────────────────────────────────
 export default function ExamDashboard() {
@@ -21,13 +17,15 @@ export default function ExamDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    fetchAll();
+  }, []);
 
   const fetchAll = async () => {
     setLoading(true);
     try {
       const [examsRes, statsRes] = await Promise.allSettled([
-        api.get('/exams/available'),       // ← available not published (includes attempt_status)
+        api.get('/exams/available'), // ← available not published (includes attempt_status)
         api.get('/candidate/stats'),
       ]);
       if (examsRes.status === 'fulfilled') setExams(examsRes.value.data.data.exams || []);
@@ -42,8 +40,9 @@ export default function ExamDashboard() {
     }
   };
 
-  const passed = Number(stats?.passed) || 0;
-  const failed = Number(stats?.failed) || 0;
+  const totalExams = Number(stats?.total_exams) || 0;
+  const passed = Number(stats?.is_passed) || 0;
+  const failed = totalExams - passed;
 
   return (
     <div style={S.root}>
@@ -59,8 +58,12 @@ export default function ExamDashboard() {
 
         <nav style={S.nav}>
           <div style={S.navSection}>Menu</div>
-          {NAV_ITEMS.map(item => (
-            <button key={item.key} onClick={() => setTab(item.key)} style={S.navLink(tab === item.key)}>
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => setTab(item.key)}
+              style={S.navLink(tab === item.key)}
+            >
               <span style={S.navIcon}>{item.icon}</span>
               <span>{item.label}</span>
             </button>
@@ -75,7 +78,13 @@ export default function ExamDashboard() {
               <div style={S.userRole}>candidate</div>
             </div>
           </div>
-          <button onClick={() => { logout(); navigate('/login'); }} style={S.logoutBtn}>
+          <button
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+            style={S.logoutBtn}
+          >
             🚪 Logout
           </button>
         </div>
@@ -89,13 +98,28 @@ export default function ExamDashboard() {
         </div>
 
         <div style={S.content}>
-          {loading ? <Loader /> : (
+          {loading ? (
+            <Loader />
+          ) : (
             <>
-              {tab === 'home'      && <HomeTab user={user} stats={stats} exams={exams} results={results} passed={passed} failed={failed} onNav={setTab} navigate={navigate} />}
-              {tab === 'exams'     && <ExamsTab exams={exams} navigate={navigate} />}
-              {tab === 'results'   && <ResultsTab results={results} navigate={navigate} />}
-              {tab === 'analytics' && <AnalyticsTab stats={stats} results={results} passed={passed} failed={failed} />}
-            {tab === 'Leaderboard'   && <AdminResults/>}
+              {tab === 'home' && (
+                <HomeTab
+                  user={user}
+                  stats={stats}
+                  exams={exams}
+                  results={results}
+                  passed={passed}
+                  failed={failed}
+                  onNav={setTab}
+                  navigate={navigate}
+                />
+              )}
+              {tab === 'exams' && <ExamsTab exams={exams} navigate={navigate} />}
+              {tab === 'results' && <ResultsTab results={results} navigate={navigate} />}
+              {tab === 'analytics' && (
+                <AnalyticsTab stats={stats} results={results} passed={passed} failed={failed} />
+              )}
+              {tab === 'Leaderboard' && <AdminResults />}
             </>
           )}
         </div>
@@ -103,14 +127,3 @@ export default function ExamDashboard() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-

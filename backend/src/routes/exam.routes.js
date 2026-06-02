@@ -6,11 +6,11 @@ import {
   updateExam,
   publishExam,
   deleteExam,
-  getAdminStats
+  getAdminStats,
+  getAvailableExams,
 } from '../controllers/exam.controller.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
 import pool from '../config/db.js';
-
 
 const router = express.Router();
 
@@ -50,63 +50,37 @@ router.get('/details/:id', async (req, res) => {
   }
 });
 
-router.get('/available', protect, authorize('candidate','super_admin','admin','coordinator'), async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT e.id, e.title, e.description, e.duration_minutes, 
-              e.total_marks, e.pass_marks, e.negative_marking, 
-              e.start_time, e.end_time, e.status,
-              ea.status as attempt_status
-       FROM exams e
-       LEFT JOIN exam_attempts ea 
-         ON ea.exam_id = e.id AND ea.candidate_id = $1
-       WHERE e.status IN ('published', 'live')
-       ORDER BY e.created_at DESC`,
-      [req.user.id]
-    );
-    res.json({ success: true, data: { exams: result.rows } });
-  } catch (err) {
-    res.status(500).json({ success: false, error: 'Failed to fetch exams' });
-  }
-});
-router.get('/admin/stats', protect, authorize('super_admin','admin','coordinator'), getAdminStats);
+router.get(
+  '/available',
+  protect,
+  authorize('candidate', 'super_admin', 'admin', 'coordinator'),
+  getAvailableExams
+);
+router.get(
+  '/admin/stats',
+  protect,
+  authorize('super_admin', 'admin', 'coordinator'),
+  getAdminStats
+);
 // All exam routes require login
 router.use(protect);
 
 // Get all exams - admin, coordinator can see all
-router.get('/',
-  authorize('super_admin','admin','coordinator'),
-  getAllExams
-);
+router.get('/', authorize('super_admin', 'admin', 'coordinator'), getAllExams);
 
 // Get single exam
-router.get('/:id',
-  authorize('super_admin','admin','coordinator'),
-  getExam
-);
+router.get('/:id', authorize('super_admin', 'admin', 'coordinator'), getExam);
 
 // Create exam
-router.post('/',
-  authorize('super_admin','admin','coordinator'),
-  createExam
-);
+router.post('/', authorize('super_admin', 'admin', 'coordinator'), createExam);
 
 // Update exam
-router.put('/:id',
-  authorize('super_admin','admin','coordinator'),
-  updateExam
-);
+router.put('/:id', authorize('super_admin', 'admin', 'coordinator'), updateExam);
 
 // Publish exam
-router.patch('/:id/publish',
-  authorize('super_admin','admin'),
-  publishExam
-);
+router.patch('/:id/publish', authorize('super_admin', 'admin'), publishExam);
 
 // Delete exam
-router.delete('/:id',
-  authorize('super_admin','admin'),
-  deleteExam
-);
+router.delete('/:id', authorize('super_admin', 'admin'), deleteExam);
 
 export default router;

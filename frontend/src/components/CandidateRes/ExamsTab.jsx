@@ -1,8 +1,11 @@
 import ExamCard from './ExamCard';
 import { card } from '../../constants/Candidate';
 function ExamsTab({ exams, navigate }) {
-  const available = exams.filter(e => !e.attempt_status || e.attempt_status === 'not_attempted');
-  const completed = exams.filter(e => e.attempt_status === 'evaluated' || e.attempt_status === 'submitted');
+  const available = exams.filter((e) => !e.attempt_status || e.attempt_status === 'not_attempted');
+  const inProgress = exams.filter((e) => e.attempt_status === 'in_progress');
+  const completed = exams.filter(
+    (e) => e.attempt_status === 'evaluated' || e.attempt_status === 'submitted'
+  );
 
   return (
     <div>
@@ -15,22 +18,45 @@ function ExamsTab({ exams, navigate }) {
 
       {available.length > 0 && (
         <div style={{ marginBottom: '24px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}>
+          <div
+            style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}
+          >
             Available to Attempt ({available.length})
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {available.map(exam => <ExamCard key={exam.id} exam={exam} navigate={navigate} />)}
+            {available.map((exam) => (
+              <ExamCard key={exam.id} exam={exam} navigate={navigate} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {inProgress.length > 0 && (
+        <div style={{ marginBottom: '24px' }}>
+          <div
+            style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}
+          >
+            In Progress ({inProgress.length})
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {inProgress.map((exam) => (
+              <ExamCard key={exam.id} exam={exam} navigate={navigate} />
+            ))}
           </div>
         </div>
       )}
 
       {completed.length > 0 && (
         <div>
-          <div style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}>
+          <div
+            style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginBottom: '12px' }}
+          >
             Completed ({completed.length})
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {completed.map(exam => <ExamCard key={exam.id} exam={exam} navigate={navigate} />)}
+            {completed.map((exam) => (
+              <ExamCard key={exam.id} exam={exam} navigate={navigate} />
+            ))}
           </div>
         </div>
       )}

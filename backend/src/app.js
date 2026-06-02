@@ -26,19 +26,17 @@ app.use(helmet());
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: { error: 'Too many requests, please try again later.' }
+  message: { error: 'Too many requests, please try again later.' },
 });
-
 
 // CORS
 
 app.set('trust proxy', 1); // Add this line
 
-
 app.use(
   cors({
     //origin: 'http://localhost:5173',
-     origin: process.env.FRONTEND_URL,
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   })
 );
@@ -48,7 +46,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     message: 'Exam Platform API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -70,7 +68,7 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
-    error: err.message || 'Internal server error'
+    error: err.message || 'Internal server error',
   });
 });
 
