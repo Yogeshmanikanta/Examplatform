@@ -10,6 +10,7 @@ import engineRoutes from './routes/engine.routes.js';
 import resultRoutes from './routes/result.routes.js';
 import candidateRoutes from './routes/candidate.routes.js';
 import adminRoutes from './routes/admin.routes.js';
+import codingRoutes from './routes/coding.routes.js';
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ app.use('/api/exams/:exam_id', engineRoutes);
 app.use('/api/exams', examRoutes);
 app.use('/api/candidate', candidateRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/exams/:exam_id/questions', codingRoutes);
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });

@@ -431,7 +431,7 @@ export const EMPTY_FORM = {
   // Descriptive
   model_answer: '',
   // Coding
-  language: 'javascript',
+  language: 'python',
   starter_code: '',
   expected_output: '',
 };

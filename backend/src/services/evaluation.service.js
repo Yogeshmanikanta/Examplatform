@@ -114,7 +114,25 @@ export const EvaluationService = {
         });
         continue;
       }
-
+      // ADD this before the switch block
+      if (question.question_type === 'coding') {
+        const subResult = await pool.query(
+          `SELECT score FROM coding_submissions
+     WHERE attempt_id=$1 AND question_id=$2
+     ORDER BY submitted_at DESC LIMIT 1`,
+          [attempt_id, question.id]
+        );
+        const codingScore = subResult.rows[0]?.score || 0;
+        totalScore += codingScore;
+        if (codingScore > 0) correct++;
+        else skipped++;
+        questionResults.push({
+          question_id: question.id,
+          status: 'coding_evaluated',
+          marks_awarded: codingScore,
+        });
+        continue;
+      }
       switch (question.question_type) {
         case 'mcq':
           isCorrect = this.evaluateMCQ(candidateAnswer, question.correct_answer);
@@ -200,7 +218,11 @@ export const EvaluationService = {
   },
 
   evaluateTrueFalse(candidateAnswer, correctAnswer) {
-    return candidateAnswer.toString().toLowerCase() === correctAnswer.toString().toLowerCase();
+    const ca = (typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer)
+      .toString()
+      .toLowerCase()
+      .replace(/"/g, '');
+    return candidateAnswer.toString().toLowerCase() === ca;
   },
 
   evaluateFillBlank(candidateAnswer, correctAnswer) {

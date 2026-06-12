@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
+import TestCaseModal from '../../components/adminSetTestcases/TestCaseModal';
 
 import {
   TYPE_LABELS,
@@ -13,7 +14,9 @@ import {
   EMPTY_FORM,
 } from '../../constants/Exam';
 
+const LANGUAGES = ['python', 'java', 'cpp', 'c'];
 // ─── Main Component ────────────────────────────────────────────────────────────
+
 export default function ExamDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -28,6 +31,7 @@ export default function ExamDetailPage() {
   const [focused, setFocused] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // qId or null
+  const [testCaseModal, setTestCaseModal] = useState(null);
 
   useEffect(() => {
     fetchAll();
@@ -292,6 +296,27 @@ export default function ExamDetailPage() {
                     {q.subject && <span style={S.qTag('#f8fafc', '#94a3b8')}>{q.subject}</span>}
                   </div>
                 </div>
+                {q.question_type === 'coding' && (
+                  <button
+                    style={{
+                      ...S.iconBtn('#e11d48'),
+                      width: 'auto',
+                      padding: '0 10px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                    }}
+                    onClick={() => setTestCaseModal(q.id)}
+                  >
+                    🧪 Tests
+                  </button>
+                )}
+                {testCaseModal && (
+                  <TestCaseModal
+                    examId={id}
+                    questionId={testCaseModal}
+                    onClose={() => setTestCaseModal(null)}
+                  />
+                )}
                 <div style={S.qActions}>
                   <button
                     style={S.iconBtn('#3b82f6')}
@@ -525,7 +550,7 @@ export default function ExamDetailPage() {
                       onChange={(e) => set('language', e.target.value)}
                       style={S.sel}
                     >
-                      {['javascript', 'python', 'java', 'cpp', 'c'].map((l) => (
+                      {['python', 'java', 'cpp', 'c'].map((l) => (
                         <option key={l} value={l}>
                           {l}
                         </option>

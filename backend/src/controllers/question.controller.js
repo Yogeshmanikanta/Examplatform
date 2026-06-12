@@ -15,42 +15,53 @@ export const addQuestion = async (req, res) => {
 
     // Cant add questions to live/completed exams
     if (exam.status === 'live' || exam.status === 'completed') {
-      return errorResponse(res,
-        'Cannot add questions to a live or completed exam');
+      return errorResponse(res, 'Cannot add questions to a live or completed exam');
     }
 
     const {
-      question_text, question_type, options,
-      correct_answer, marks, negative_marks,
-      difficulty, subject, topic, explanation,
-      model_answer
+      question_text,
+      question_type,
+      options,
+      correct_answer,
+      marks,
+      negative_marks,
+      difficulty,
+      subject,
+      topic,
+      explanation,
+      model_answer,
     } = req.body;
 
     // Validate required fields
-   if (!question_text || !question_type) {
-  return errorResponse(res, 'Question text and type are required');
-}
+    if (!question_text || !question_type) {
+      return errorResponse(res, 'Question text and type are required');
+    }
 
-if (question_type !== 'descriptive' && !correct_answer) {
-  return errorResponse(res, 'Correct answer is required');
-}
+    if (question_type !== 'descriptive' && question_type !== 'coding' && !correct_answer) {
+      return errorResponse(res, 'Correct answer is required');
+    }
 
     // Validate MCQ has options
     if (question_type === 'mcq' && (!options || options.length < 2)) {
-      return errorResponse(res,
-        'MCQ questions must have at least 2 options');
+      return errorResponse(res, 'MCQ questions must have at least 2 options');
     }
 
+    const finalCorrectAnswer = question_type === 'coding' ? '{}' : correct_answer;
     const question = await QuestionModel.create({
       exam_id,
-      question_text, question_type, options,
-      correct_answer, marks, negative_marks,
-      difficulty, subject, topic, explanation
+      question_text,
+      question_type,
+      options,
+      correct_answer: finalCorrectAnswer,
+      marks,
+      negative_marks,
+      difficulty,
+      subject,
+      topic,
+      explanation,
     });
 
-    return successResponse(res, { question },
-      'Question added successfully', 201);
-
+    return successResponse(res, { question }, 'Question added successfully', 201);
   } catch (error) {
     console.error('Add question error:', error);
     return errorResponse(res, 'Failed to add question', 500);
@@ -70,9 +81,8 @@ export const getQuestions = async (req, res) => {
     const questions = await QuestionModel.findByExamId(exam_id);
     return successResponse(res, {
       questions,
-      total: questions.length
+      total: questions.length,
     });
-
   } catch (error) {
     console.error('Get questions error:', error);
     return errorResponse(res, 'Failed to fetch questions', 500);
@@ -89,12 +99,10 @@ export const updateQuestion = async (req, res) => {
 
     const updated = await QuestionModel.update(req.params.id, {
       ...question,
-      ...req.body
+      ...req.body,
     });
 
-    return successResponse(res, { question: updated },
-      'Question updated successfully');
-
+    return successResponse(res, { question: updated }, 'Question updated successfully');
   } catch (error) {
     console.error('Update question error:', error);
     return errorResponse(res, 'Failed to update question', 500);
@@ -111,7 +119,6 @@ export const deleteQuestion = async (req, res) => {
 
     await QuestionModel.delete(req.params.id);
     return successResponse(res, null, 'Question deleted successfully');
-
   } catch (error) {
     console.error('Delete question error:', error);
     return errorResponse(res, 'Failed to delete question', 500);
@@ -135,11 +142,15 @@ export const bulkAddQuestions = async (req, res) => {
 
     const created = await QuestionModel.bulkCreate(exam_id, questions);
 
-    return successResponse(res, {
-      questions: created,
-      total: created.length
-    }, `${created.length} questions added successfully`, 201);
-
+    return successResponse(
+      res,
+      {
+        questions: created,
+        total: created.length,
+      },
+      `${created.length} questions added successfully`,
+      201
+    );
   } catch (error) {
     console.error('Bulk add error:', error);
     return errorResponse(res, 'Failed to bulk add questions', 500);

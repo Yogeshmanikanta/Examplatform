@@ -3,6 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import debounce from 'lodash.debounce';
+import Editor from '@monaco-editor/react';
+const TEMPLATES = {
+  python: `import sys\nfor line in sys.stdin:\n    line = line.strip()\n    if line:\n        n = int(line)\n        # your code here\n        print(n)\n`,
+  java: `import java.util.Scanner;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        while (sc.hasNextLine()) {\n            int n = Integer.parseInt(sc.nextLine().trim());\n            // your code here\n            System.out.println(n);\n        }\n    }\n}\n`,
+  cpp: `#include<iostream>\nusing namespace std;\nint main(){\n    int n;\n    while(cin>>n){\n        // your code here\n        cout<<n<<endl;\n    }\n    return 0;\n}\n`,
+  c: `#include<stdio.h>\nint main(){\n    int n;\n    while(scanf("%d",&n)==1){\n        // your code here\n        printf("%d\\n",n);\n    }\n    return 0;\n}\n`,
+};
 
 const parseOptions = (options) => {
   if (!options) return [];
@@ -17,6 +24,319 @@ const parseOptions = (options) => {
   return parsed;
 };
 
+function CodingPanel({ question, attemptId, examId, onCodeChange }) {
+  const [language, setLanguage] = useState('python');
+  const [code, setCode] = useState(TEMPLATES.python);
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const handleSubmit = async () => {
+    if (!code.trim()) {
+      toast.error('Write some code first');
+      return;
+    }
+    setRunning(true);
+    setResult(null);
+    try {
+      const res = await api.post(`/exams/${examId}/questions/${question.id}/coding/submit`, {
+        attempt_id: attemptId,
+        language,
+        source_code: code,
+      });
+      setResult(res.data.data);
+      console.log(res.data.data);
+      onCodeChange(question.id, code);
+      if (res.data.data.verdict === 'Accepted') toast.success('✅ All test cases passed!');
+      else if (res.data.data.verdict === 'Partial') toast('⚠️ Partial score', { icon: '⚠️' });
+      else toast.error(`❌ ${res.data.data.verdict}`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Submission failed');
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const vStyle = (v) =>
+    ({
+      Accepted: { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0' },
+      Partial: { bg: '#fffbeb', color: '#d97706', border: '#fcd34d' },
+      'Wrong Answer': { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+      'Compilation Error': { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+      'Runtime Error': { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' },
+    })[v] || { bg: '#fef2f2', color: '#dc2626', border: '#fecaca' };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b' }}>LANGUAGE:</span>
+        <select
+          value={language}
+          onChange={(e) => {
+            setLanguage(e.target.value);
+            setCode(TEMPLATES[e.target.value]);
+          }}
+          style={{
+            padding: '6px 12px',
+            borderRadius: '8px',
+            border: '1.5px solid #e2e8f0',
+            fontSize: '13px',
+            fontWeight: 600,
+            background: '#f8fafc',
+            cursor: 'pointer',
+            outline: 'none',
+          }}
+        >
+          {['python', 'java', 'cpp', 'c'].map((l) => (
+            <option key={l} value={l}>
+              {l.toUpperCase()}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={handleSubmit}
+          disabled={running}
+          style={{
+            marginLeft: 'auto',
+            padding: '8px 20px',
+            borderRadius: '8px',
+            border: 'none',
+            background: 'linear-gradient(135deg,#10b981,#059669)',
+            color: '#fff',
+            fontSize: '13px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            opacity: running ? 0.7 : 1,
+          }}
+        >
+          {running ? '⏳ Running…' : '📤 Submit Code'}
+        </button>
+      </div>
+
+      <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+        <Editor
+          height="320px"
+          language={language === 'cpp' ? 'cpp' : language}
+          value={code}
+          onChange={(val) => setCode(val || '')}
+          theme="vs-dark"
+          options={{
+            fontSize: 14,
+            minimap: { enabled: false },
+            scrollBeyondLastLine: false,
+            lineNumbers: 'on',
+            automaticLayout: true,
+            tabSize: 4,
+          }}
+        />
+      </div>
+
+      {result && (
+        <div
+          style={{
+            borderRadius: '12px',
+            border: `1px solid ${vStyle(result.verdict).border}`,
+            background: vStyle(result.verdict).bg,
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              padding: '12px 16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              borderBottom: `1px solid ${vStyle(result.verdict).border}`,
+            }}
+          >
+            <span
+              style={{ fontWeight: 800, fontSize: '14px', color: vStyle(result.verdict).color }}
+            >
+              {result.verdict === 'Accepted' ? '✅' : result.verdict === 'Partial' ? '⚠️' : '❌'}{' '}
+              {result.verdict}
+            </span>
+            <div
+              style={{
+                display: 'flex',
+                gap: '12px',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#64748b',
+              }}
+            >
+              <span>
+                Visible: {result.visible_passed}/{result.visible_total}
+              </span>
+              {result.hidden_total > 0 && (
+                <span>
+                  Hidden: {result.hidden_passed}/{result.hidden_total}
+                </span>
+              )}
+              <span style={{ color: '#10b981' }}>Score: {result.score} pts</span>
+            </div>
+          </div>
+
+          {(result.compile_error || result.runtime_error) && (
+            <div style={{ padding: '12px 16px' }}>
+              <div
+                style={{ fontSize: '11px', fontWeight: 800, color: '#dc2626', marginBottom: '6px' }}
+              >
+                {result.compile_error ? 'COMPILATION ERROR' : 'RUNTIME ERROR'}
+              </div>
+              <pre
+                style={{
+                  margin: 0,
+                  fontSize: '12px',
+                  color: '#7f1d1d',
+                  whiteSpace: 'pre-wrap',
+                  fontFamily: 'monospace',
+                  background: '#fff5f5',
+                  padding: '10px',
+                  borderRadius: '6px',
+                }}
+              >
+                {result.compile_error || result.runtime_error}
+              </pre>
+            </div>
+          )}
+
+          {result.visible_results?.map((tc, i) => (
+            <div
+              key={i}
+              style={{
+                margin: '0 12px 10px',
+                background: '#fff',
+                borderRadius: '8px',
+                border: `1px solid ${tc.passed ? '#bbf7d0' : '#fecaca'}`,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  padding: '8px 12px',
+                  background: tc.passed ? '#f0fdf4' : '#fef2f2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+              >
+                <span>{tc.passed ? '✅' : '❌'}</span>
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: tc.passed ? '#16a34a' : '#dc2626',
+                  }}
+                >
+                  Test {i + 1} — {tc.passed ? 'Passed' : 'Failed'}
+                </span>
+              </div>
+              {!tc.passed && (
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '10px',
+                  }}
+                >
+                  {tc.input && (
+                    <div>
+                      <div
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          color: '#94a3b8',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        INPUT
+                      </div>
+                      <pre
+                        style={{
+                          margin: 0,
+                          fontSize: '12px',
+                          background: '#f8fafc',
+                          padding: '6px 8px',
+                          borderRadius: '6px',
+                          fontFamily: 'monospace',
+                        }}
+                      >
+                        {tc.input}
+                      </pre>
+                    </div>
+                  )}
+                  <div>
+                    <div
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        color: '#94a3b8',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      EXPECTED
+                    </div>
+                    <pre
+                      style={{
+                        margin: 0,
+                        fontSize: '12px',
+                        background: '#f0fdf4',
+                        padding: '6px 8px',
+                        borderRadius: '6px',
+                        fontFamily: 'monospace',
+                        color: '#16a34a',
+                      }}
+                    >
+                      {tc.expected_output}
+                    </pre>
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        color: '#94a3b8',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      YOUR OUTPUT
+                    </div>
+                    <pre
+                      style={{
+                        margin: 0,
+                        fontSize: '12px',
+                        background: '#fef2f2',
+                        padding: '6px 8px',
+                        borderRadius: '6px',
+                        fontFamily: 'monospace',
+                        color: '#dc2626',
+                      }}
+                    >
+                      {tc.actual_output || '(no output)'}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+
+          {result.hidden_total > 0 && (
+            <div
+              style={{
+                padding: '10px 16px',
+                borderTop: `1px solid ${vStyle(result.verdict).border}`,
+              }}
+            >
+              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
+                🔒 Hidden: {result.hidden_passed}/{result.hidden_total} passed
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 export default function LiveExamPage() {
   const { exam_id } = useParams();
   const navigate = useNavigate();
@@ -685,8 +1005,18 @@ export default function LiveExamPage() {
                   />
                 )}
 
-                {/* Clear answer button */}
-                {answers[currentQuestion.id] && (
+                {/* Coding */}
+                {currentQuestion.question_type === 'coding' && (
+                  <CodingPanel
+                    question={currentQuestion}
+                    attemptId={attemptId}
+                    examId={exam_id}
+                    onCodeChange={(qId, code) => saveAnswer(qId, code)}
+                  />
+                )}
+
+                {/* Clear answer — not for coding */}
+                {currentQuestion.question_type !== 'coding' && answers[currentQuestion.id] && (
                   <button
                     onClick={() => saveAnswer(currentQuestion.id, '')}
                     style={{
