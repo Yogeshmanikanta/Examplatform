@@ -3,11 +3,11 @@ import {
   getMyResult,
   getExamResults,
   publishResults,
-  getLeaderboard
+  getLeaderboard,
 } from '../controllers/result.controller.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
-import {getCandidateStats} from '../controllers/result.controller.js';
-
+import { getCandidateStats } from '../controllers/result.controller.js';
+import { getAllCandidateResults } from '../controllers/result.controller.js';
 const router = express.Router({ mergeParams: true });
 router.use(protect);
 
@@ -18,17 +18,17 @@ router.get('/my', authorize('candidate'), getMyResult);
 router.get('/leaderboard', getLeaderboard);
 
 // Admin sees all results
-router.get('/',
-  authorize('super_admin', 'admin', 'coordinator','candidate'),
-  getExamResults
-);
+router.get('/', authorize('super_admin', 'admin', 'coordinator', 'candidate'), getExamResults);
 
 // Admin publishes results
-router.post('/publish',
-  authorize('super_admin', 'admin'),
-  publishResults
-);
+router.post('/publish', authorize('super_admin', 'admin'), publishResults);
 
 // candidate stats
 router.get('/candidate/stats', authorize('candidate'), getCandidateStats);
 export default router;
+
+router.get(
+  '/admin/all',
+  authorize('super_admin', 'admin', 'coordinator', 'candidate'),
+  getAllCandidateResults
+);

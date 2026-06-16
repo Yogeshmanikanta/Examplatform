@@ -10,3 +10,4 @@ yarn.lock
 src/i18n
 src/components/LanguageSwitcher.jsx
 .vscode
+
